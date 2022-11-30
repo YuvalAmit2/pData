@@ -63,14 +63,16 @@ public class Main {
          e.printStackTrace();
       }
       tableWriter.write("PMC Name|Publishing Date|Journal Name|P Value?\n");
-      String parentDir = "/Users/yuvalamit/Downloads/XML Files Parent Folder";
+//      String parentDir = "/Users/yuvalamit/Downloads/XML Files Parent Folder";
+      String parentDir = "/home/pmc/sample/xml"; ///PMC001xxxxxx";
       File testDir = new File(parentDir);
       String[] subDirs = testDir.list();
       for (String dir: subDirs) {
+	System.out.println("Checking " + parentDir + "/" + dir);
          createArticles(parentDir, dir);
       }
       myWriter = new FileWriter("pdata.txt");
-      myWriter.write(superData);
+//      myWriter.write(superData);
       myWriter.close();
       tableWriter.close();
       
@@ -85,18 +87,18 @@ public class Main {
          String[] bigFiles = f.list();
          for (String bStr: bigFiles) {
             if (!bStr.equals(".DS_Store")) {
-               File f2 = new File(f.toString(), bStr);
-               String[] files = f2.list();
-               for (String str : files) {
-                  if (str.endsWith(".xml")) {
+//               File f2 = new File(f.toString(), bStr);
+//              String[] files = f2.list();
+//               for (String str : files) {
+                  if (bStr.endsWith(".xml")) {
                      indexAll++;
-                     Article article = processFile(f2, str);
+                     Article article = processFile(f, bStr);
                      if (article.getDate() != null) {
                         articles.add(article);
                         textScanFiles(article);
                      }
                   }
-               }
+//               }
             }
          }
       }
@@ -113,7 +115,8 @@ public class Main {
          String s = name + ", " + date +
                  ", " + jName + ", " + pVal;
          System.out.println(s);
-         superData += s + "\n";
+//         superData += s + "\n";
+	myWriter.write(s + "\n");
          tableWriter.write(name + "|");
          tableWriter.write(date + "|");
          tableWriter.write(jName + "|");
@@ -168,17 +171,34 @@ public class Main {
    
    public static String txtToStr(String fileName) throws IOException {
       String retString = "";
-      Path path = findTxtFile(fileName);
-      File file = new File(path.toString());
+//      Path path = findTxtFileNew(fileName);
+//      File file = new File(path.toString());
+      File file = findTxtFileNew(fileName);
+	if (file == null) { return ""; }
       Scanner fileScanner = new Scanner(file);
       while (fileScanner.hasNextLine()) {
          retString += fileScanner.nextLine();
       }
       return retString;
    }
-   
+
+   public static File findTxtFileNew(String fileName) throws IOException {
+	File testDir = new File("/home/pmc/sample/txt");
+      String[] subDirs = testDir.list();
+      for (String dir: subDirs) {
+	File f0 = new File(testDir, dir);
+	File f = new File(f0, fileName);
+	if (f.exists()) {
+	 return f;
+	}
+      }
+	System.out.println("Can't find " + fileName);
+return null;
+  }
+
    public static Path findTxtFile(String fileName) throws IOException {
-      Path path = Paths.get("/Users/yuvalamit/Downloads/TXT Files Parent Folder");
+//      Path path = Paths.get("/Users/yuvalamit/Downloads/TXT Files Parent Folder");
+      Path path = Paths.get("/home/pmc/sample/txt"); // /PMC001xxxxxx");
       List<Path> filePaths = findByFileName(path, fileName);
       //filePaths.forEach(x -> System.out.println(x.toString()));
       if (filePaths.size() > 0) {

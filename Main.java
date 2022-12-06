@@ -35,18 +35,17 @@ public class Main {
    static String superData = "";
    static File myObj;
    static File tableFile;
-   static FileWriter myWriter;
    static FileWriter tableWriter;
+   static String mainDir;
    public static void main (String[] args) throws IOException {
       keys.add(Pattern.compile(".*\\bp(\\s*|\\s-\\s)(value|val)(s)\\b.*"));
       //p val(ue)(s), p-val(ue)(s), pval(ue)(s), p - value(ue)(s)
       keys.add(Pattern.compile(".*\\bp\\s*(<|>|=|equals)\\b.*"));
       //p<, p <, p>, p >, p=, p =, p equals
-      
+
       try {
          myObj = new File("pdata.txt");
          tableFile = new File("pdata.csv");
-         myWriter = new FileWriter("pdata.txt");
          tableWriter = new FileWriter(tableFile);
          if (myObj.createNewFile()) {
             System.out.println("File created: " + myObj.getName());
@@ -63,163 +62,134 @@ public class Main {
          e.printStackTrace();
       }
       tableWriter.write("PMC Name|Publishing Date|Journal Name|P Value?\n");
-//      String parentDir = "/Users/yuvalamit/Downloads/XML Files Parent Folder";
-      String parentDir = "/home/pmc/sample/xml"; ///PMC001xxxxxx";
-      File testDir = new File(parentDir);
+      mainDir = args.length == 0 ? "/Users/yuvalamit/Downloads/PMC" : args[0];
+      File testDir = new File(mainDir + "/xml");
       String[] subDirs = testDir.list();
       for (String dir: subDirs) {
-	System.out.println("Checking " + parentDir + "/" + dir);
-         createArticles(parentDir, dir);
+         System.out.println("Checking " + testDir + "/" + dir);
+         createArticles(testDir, dir);
       }
-      myWriter = new FileWriter("pdata.txt");
-//      myWriter.write(superData);
-      myWriter.close();
       tableWriter.close();
-      
+
       System.out.println(index);
       System.out.println(indexAll);
    }
-   
-   
-   private static void createArticles(String parentDir, String dir) throws IOException {
+
+   private static void createArticles(File parentDir, String dir) throws IOException {
       File f = new File(parentDir, dir);
       if (f.isDirectory()) {
+         System.out.println("*****" + f);
          String[] bigFiles = f.list();
          for (String bStr: bigFiles) {
             if (!bStr.equals(".DS_Store")) {
-//               File f2 = new File(f.toString(), bStr);
-//              String[] files = f2.list();
-//               for (String str : files) {
+               //               File f2 = new File(f.toString(), bStr);
+               //              String[] files = f2.list();
+               //               for (String str : files) {
                   if (bStr.endsWith(".xml")) {
                      indexAll++;
                      Article article = processFile(f, bStr);
-                     if (article.getDate() != null) {
-                        articles.add(article);
+                     if (article.getDate() == null) {
+                        String name = article.getName();
+                        String jName = article.getJournalName();
+                        String s = name + "|NULL|" + jName + "|NULL\n";
+                        tableWriter.write(s);
+                     } else {
+                        // articles.add(article);
                         textScanFiles(article);
                      }
                   }
-//               }
+                  //               }
+               }
             }
          }
       }
-   }
-   
-   private static void textScanFiles(Article art) {
-      try {
-         boolean b = searchInFile((art.getName() + ".txt"));
-         art.setpVal(b);
+
+      private static void textScanFiles(Article art) {
          String name = art.getName();
-         String date = art.dateToString();
          String jName = art.getJournalName();
-         boolean pVal = art.getpVal();
-         String s = name + ", " + date +
-                 ", " + jName + ", " + pVal;
+         String date = art.dateToString();
+         String s;
+         try {
+            boolean b = searchInFile((art.getName() + ".txt"));
+            art.setpVal(b);
+            boolean pVal = art.getpVal();
+            s = name + "|" + date + "|" + jName + "|" + pVal;
+         } catch (IOException e) {
+            s = name + "|" + date + "|" + jName + "|" + "NULL";
+         }
          System.out.println(s);
-//         superData += s + "\n";
-	myWriter.write(s + "\n");
-         tableWriter.write(name + "|");
-         tableWriter.write(date + "|");
-         tableWriter.write(jName + "|");
-         tableWriter.write(String.valueOf(pVal));
-         tableWriter.write("\n");
-      } catch (IOException e) {
-         articles.remove(art);
-      }
-   }
- 
-   
-   private static Article processFile(File f, String str) throws IOException {
-      File f3 = new File(f.toString(), str);
-      //System.out.println(f2);
-      FileInputStream testFis = new FileInputStream(f3);
-      Document testDoc = Jsoup.parse(testFis, null, "", Parser.xmlParser());
-      Article article = new Article(f3.getName().substring(0, f3.getName().length() - 4));
-      processArticle(article, testDoc);
-      //System.out.println(f2.getName());
-      return article;
-   }
-   
-   private static void processArticle(Article article, Document doc) throws IOException{
-      Elements e = doc.select("pub-date");
-      int index = 0;
-      try {
-         while (e.get(index).children().size() < 3) {
-            index++;
-         }
-      } catch(Exception ex) {
-         article.setDate(null);
-         return;
-      }
-      Elements e2 = e.get(index).children();
-      int day = Integer.parseInt(e2.get(0).text());
-      int month = Integer.parseInt(e2.get(1).text());
-      int year = Integer.parseInt(e2.get(2).text());
-      String journalName = doc.select("journal-title").first().text();
-      article.setDate(new Date(year, month, day));
-      article.setJournalName(journalName);
-   }
-   
-   public static boolean searchInFile(String fileName) throws IOException {
-      String s = txtToStr(fileName);
-      for (int i = 0; i < keys.size(); i++) {
-         if (keys.get(i).matcher(s).matches()) {
-            return true;
+         try {
+            tableWriter.write(s + "\n");
+         } catch (IOException e) {
+            System.err.println("Error writing to CSV!!");
+            System.exit(1);
          }
       }
-      return false;
-   }
-   
-   public static String txtToStr(String fileName) throws IOException {
-      String retString = "";
-//      Path path = findTxtFileNew(fileName);
-//      File file = new File(path.toString());
-      File file = findTxtFileNew(fileName);
-	if (file == null) { return ""; }
-      Scanner fileScanner = new Scanner(file);
-      while (fileScanner.hasNextLine()) {
-         retString += fileScanner.nextLine();
-      }
-      return retString;
-   }
 
-   public static File findTxtFileNew(String fileName) throws IOException {
-	File testDir = new File("/home/pmc/sample/txt");
-      String[] subDirs = testDir.list();
-      for (String dir: subDirs) {
-	File f0 = new File(testDir, dir);
-	File f = new File(f0, fileName);
-	if (f.exists()) {
-	 return f;
-	}
-      }
-	System.out.println("Can't find " + fileName);
-return null;
-  }
 
-   public static Path findTxtFile(String fileName) throws IOException {
-//      Path path = Paths.get("/Users/yuvalamit/Downloads/TXT Files Parent Folder");
-      Path path = Paths.get("/home/pmc/sample/txt"); // /PMC001xxxxxx");
-      List<Path> filePaths = findByFileName(path, fileName);
-      //filePaths.forEach(x -> System.out.println(x.toString()));
-      if (filePaths.size() > 0) {
-         Path filePath = filePaths.get(0);
-         return filePath;
+      private static Article processFile(File f, String str) throws IOException {
+         File f3 = new File(f.toString(), str);
+         //System.out.println(f2);
+         FileInputStream testFis = new FileInputStream(f3);
+         Document testDoc = Jsoup.parse(testFis, null, "", Parser.xmlParser());
+         Article article = new Article(f3.getName().substring(0, f3.getName().length() - 4));
+         processArticle(article, testDoc);
+         //System.out.println(f2.getName());
+         return article;
       }
-      throw new IOException();
-      //return null;
-   }
-   
-   public static List<Path> findByFileName(Path path, String fileName)
-           throws IOException {
-      List<Path> result;
-      try (Stream<Path> pathStream = Files.find(path,
-              Integer.MAX_VALUE,
-              (p, basicFileAttributes) ->
-                      p.getFileName().toString().equalsIgnoreCase(fileName)))
-      {
-         result = pathStream.collect(Collectors.toList());
+
+      private static void processArticle(Article article, Document doc) throws IOException{
+         Elements e = doc.select("pub-date");
+         int index = 0;
+         try {
+            while (e.get(index).children().size() < 3) {
+               index++;
+            }
+         } catch(Exception ex) {
+            article.setDate(null);
+            return;
+         }
+         Elements e2 = e.get(index).children();
+         int day = Integer.parseInt(e2.get(0).text());
+         int month = Integer.parseInt(e2.get(1).text());
+         int year = Integer.parseInt(e2.get(2).text());
+         String journalName = doc.select("journal-title").first().text();
+         article.setDate(new Date(year, month, day));
+         article.setJournalName(journalName);
       }
-      return result;
-   
+
+      public static boolean searchInFile(String fileName) throws IOException {
+         String s = txtToStr(fileName);
+         for (int i = 0; i < keys.size(); i++) {
+            if (keys.get(i).matcher(s).matches()) {
+               return true;
+            }
+         }
+         return false;
+      }
+
+      public static String txtToStr(String fileName) throws IOException {
+         String retString = "";
+         File file = findTxtFileNew(fileName);
+         if (file == null) { return ""; }
+         Scanner fileScanner = new Scanner(file);
+         while (fileScanner.hasNextLine()) {
+            retString += fileScanner.nextLine();
+         }
+         return retString;
+      }
+
+      public static File findTxtFileNew(String fileName) throws IOException {
+         File testDir = new File(mainDir + "/txt");
+         String[] subDirs = testDir.list();
+         for (String dir: subDirs) {
+            File f0 = new File(testDir, dir);
+            File f = new File(f0, fileName);
+            if (f.exists()) {
+               return f;
+            }
+         }
+         System.out.println("Can't find " + fileName);
+         throw new FileNotFoundException(fileName);
+      }
    }
-}

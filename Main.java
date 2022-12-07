@@ -91,7 +91,7 @@ public class Main {
                      if (article.getDate() == null) {
                         String name = article.getName();
                         String jName = article.getJournalName();
-                        String s = name + "|NULL|" + jName + "|NULL\n";
+                        String s = name + "|00/00/0000|" + jName + "|NULL\n";
                         tableWriter.write(s);
                      } else {
                         // articles.add(article);
@@ -140,21 +140,18 @@ public class Main {
 
       private static void processArticle(Article article, Document doc) throws IOException{
          Elements e = doc.select("pub-date");
-         int index = 0;
-         try {
-            while (e.get(index).children().size() < 3) {
-               index++;
-            }
-         } catch(Exception ex) {
-            article.setDate(null);
-            return;
-         }
          Elements e2 = e.get(index).children();
-         int day = Integer.parseInt(e2.get(0).text());
-         int month = Integer.parseInt(e2.get(1).text());
-         int year = Integer.parseInt(e2.get(2).text());
+         if (e2.size() == 3) {
+            int day = Integer.parseInt(e2.get(0).text());
+            int month = Integer.parseInt(e2.get(1).text());
+            int year = Integer.parseInt(e2.get(2).text());
+            article.setDate(new Date(year, month, day));   
+         } else if (e2.size() == 2) {
+            int month = Integer.parseInt(e2.get(0).text());
+            int year = Integer.parseInt(e2.get(1).text());
+            article.setDate(new Date(year, month, 1));   
+         }
          String journalName = doc.select("journal-title").first().text();
-         article.setDate(new Date(year, month, day));
          article.setJournalName(journalName);
       }
 

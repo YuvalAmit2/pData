@@ -197,17 +197,18 @@ public class Main {
 
       public static String txtToStr(String fileName) throws IOException {
          File file = findTxtFileNew(fileName);
+/*
          Path filePath = Path.of(file.toString());
          return Files.readString(filePath);
-/*
+*/
          StringBuilder sb = new StringBuilder(32 * 1024);
          Scanner fileScanner = new Scanner(file);
          while (fileScanner.hasNextLine()) {
             sb.append(fileScanner.nextLine());
+            sb.append(' ');
          }
          fileScanner.close();
          return sb.toString();
-*/
       }
 
       public static File findTxtFileNew(String fileName) throws IOException {

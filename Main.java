@@ -175,9 +175,7 @@ public class Main {
             if (day == 0) {
                day = 1;
             }
-            if (month == 0) {
-               month = 1;
-            } else {
+            if (month != 0) {
                month = month - 1;
             }
             Date dt = new Date(year - 1900, month, day);

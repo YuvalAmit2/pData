@@ -33,19 +33,14 @@ public class Article {
    public String getName() {
       return name;
    }
-   
-   public String dateToString(int month, int day, int year) {
-      String s = month + "/" + day + "/" + year;
-      return s;
-   }
-   
+      
    public String dateToString() {
-      int month = date.getMonth();
+      int month = date.getMonth() + 1;
       if (month == 0) {
          month = 12;
       }
       int day = date.getDate();
-      int year = date.getYear();
+      int year = date.getYear() + 1900;
       String s = month + "/" + day + "/" + year;
       return s;
    }

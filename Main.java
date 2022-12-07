@@ -1,5 +1,6 @@
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.parser.Parser;
 import java.io.*;
@@ -30,11 +31,9 @@ import java.util.regex.Pattern;
 public class Main {
    static ArrayList<Article> articles = new ArrayList<Article>();
    static ArrayList<Pattern> keys = new ArrayList<Pattern>();
-   static int index = 0;
    static int indexAll = 0;
    static String superData = "";
    static File myObj;
-   static File tableFile;
    static FileWriter tableWriter;
    static String mainDir;
    public static void main (String[] args) throws IOException {
@@ -43,23 +42,18 @@ public class Main {
       keys.add(Pattern.compile(".*\\bp\\s*(<|>|=|equals)\\b.*"));
       //p<, p <, p>, p >, p=, p =, p equals
 
+      File tableFile = new File("pdata.csv");
       try {
-         myObj = new File("pdata.txt");
-         tableFile = new File("pdata.csv");
          tableWriter = new FileWriter(tableFile);
-         if (myObj.createNewFile()) {
-            System.out.println("File created: " + myObj.getName());
-         } else {
-            System.out.println("File already exists.");
-         }
          if (tableFile.createNewFile())  {
             System.out.println("File created: " + myObj.getName());
          } else {
             System.out.println("File already exists.");
          }
       } catch (IOException e) {
-         System.out.println("An error occurred.");
+         System.err.println("An error occurred.");
          e.printStackTrace();
+         System.exit(1);
       }
       tableWriter.write("PMC Name|Publishing Date|Journal Name|P Value?\n");
       mainDir = args.length == 0 ? "/Users/yuvalamit/Downloads/PMC" : args[0];
@@ -71,7 +65,6 @@ public class Main {
       }
       tableWriter.close();
 
-      System.out.println(index);
       System.out.println(indexAll);
    }
 
@@ -122,6 +115,7 @@ public class Main {
             tableWriter.write(s + "\n");
          } catch (IOException e) {
             System.err.println("Error writing to CSV!!");
+            e.printStackTrace();
             System.exit(1);
          }
       }
@@ -140,16 +134,54 @@ public class Main {
 
       private static void processArticle(Article article, Document doc) throws IOException{
          Elements e = doc.select("pub-date");
-         Elements e2 = e.get(index).children();
-         if (e2.size() == 3) {
-            int day = Integer.parseInt(e2.get(0).text());
-            int month = Integer.parseInt(e2.get(1).text());
-            int year = Integer.parseInt(e2.get(2).text());
-            article.setDate(new Date(year, month, day));   
-         } else if (e2.size() == 2) {
-            int month = Integer.parseInt(e2.get(0).text());
-            int year = Integer.parseInt(e2.get(1).text());
-            article.setDate(new Date(year, month, 1));   
+         Element pubDate1 = null;
+         Element pubDate2 = null;
+         Element pubDate3 = null;
+         for (int i = 0; i < e.size(); i++) {
+            Element pubDate = e.get(i);
+            int size = pubDate.children().size();
+            if (size == 3) {
+               pubDate3 = pubDate;
+            } else if (size == 2) {
+               pubDate2 = pubDate;
+            } else if (size == 1) {
+               pubDate1 = pubDate;
+            }
+         }
+         Element pubDate = pubDate3 != null ? pubDate3 :
+            pubDate2 != null ? pubDate2 :
+            pubDate1;
+         Elements children = pubDate.children();
+         int year = 0, month = 0, day = 0;
+         for (int i = 0; i < children.size(); i++) {
+            Element child = children.get(i);
+            String text = child.text();
+            String tagName = child.normalName();
+            int val;
+            try {
+               val = Integer.parseInt(text);
+            } catch (NumberFormatException ee) {
+               val = 0;
+            }
+            if (tagName.equals("year")) {
+               year = val;
+            } else if (tagName.equals("month")) {
+               month = val;
+            } else if (tagName.equals("day")) {
+               day = val;
+            }
+         }
+         if (year != 0) {
+            if (day == 0) {
+               day = 1;
+            }
+            if (month == 0) {
+               month = 1;
+            } else {
+               month = month - 1;
+            }
+            Date dt = new Date(year - 1900, month, day);
+            article.setDate(dt);
          }
          String journalName = doc.select("journal-title").first().text();
          article.setJournalName(journalName);
@@ -166,14 +198,18 @@ public class Main {
       }
 
       public static String txtToStr(String fileName) throws IOException {
-         String retString = "";
          File file = findTxtFileNew(fileName);
-         if (file == null) { return ""; }
+         Path filePath = Path.of(file.toString());
+         return Files.readString(filePath);
+/*
+         StringBuilder sb = new StringBuilder(32 * 1024);
          Scanner fileScanner = new Scanner(file);
          while (fileScanner.hasNextLine()) {
-            retString += fileScanner.nextLine();
+            sb.append(fileScanner.nextLine());
          }
-         return retString;
+         fileScanner.close();
+         return sb.toString();
+*/
       }
 
       public static File findTxtFileNew(String fileName) throws IOException {

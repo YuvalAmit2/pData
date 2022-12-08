@@ -55,7 +55,7 @@ public class Main {
          e.printStackTrace();
          System.exit(1);
       }
-      tableWriter.write("PMC Name|Publishing Date|Journal Name|P Value?\n");
+      tableWriter.write("PMC Name|Publishing Date|Journal Name|Article Title|P Value?\n");
       mainDir = args.length == 0 ? "/Users/yuvalamit/Downloads/PMC" : args[0];
       File testDir = new File(mainDir + "/xml");
       String[] subDirs = testDir.list();

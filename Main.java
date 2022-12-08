@@ -37,7 +37,7 @@ public class Main {
    static FileWriter tableWriter;
    static String mainDir;
    public static void main (String[] args) throws IOException {
-      keys.add(Pattern.compile(".*\\bp((\\s|)|((\\s|)-(\\s|)))(value|val)(s|)\\b.*"));
+      keys.add(Pattern.compile(".*\\bp(\\s+|\\s*-\\s*)(value|val)(s)\\b.*"));
       //p val(ue)(s), p-val(ue)(s), pval(ue)(s), p - value(ue)(s)
       keys.add(Pattern.compile(".*\\bp\\s*(<|>|=|equals)\\b.*"));
       //p<, p <, p>, p >, p=, p =, p equals

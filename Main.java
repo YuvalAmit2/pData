@@ -39,7 +39,7 @@ public class Main {
    public static void main (String[] args) throws IOException {
       keys.add(Pattern.compile(".*\\bp(\\s*-?\\s*)(value|val)(s?)\\b.*"));
       //p val(ue)(s), p-val(ue)(s), pval(ue)(s), p - value(ue)(s)
-      keys.add(Pattern.compile(".*\\bp\\s*(<|>|=|equals)\\b.*"));
+      keys.add(Pattern.compile(".*\\bp\\s*(<|>|=|equals)\\s*\\d.*"));
       //p<, p <, p>, p >, p=, p =, p equals
 
       File tableFile = new File("pdata.csv");

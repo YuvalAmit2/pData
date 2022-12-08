@@ -8,6 +8,8 @@ public class Article {
    boolean pVal;
    public Article(String name) {
       this.name = name;
+      this.title = "";
+      this.journalName = "";
    }
    
    public Date getDate() {

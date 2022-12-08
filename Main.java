@@ -133,6 +133,12 @@ public class Main {
       }
 
       private static void processArticle(Article article, Document doc) throws IOException{
+         processArticleDate(article, doc);
+         String journalName = doc.select("journal-title").first().text();
+         article.setJournalName(journalName);
+      }
+
+      private static void processArticleDate(Article article, Document doc) throws IOException{
          Elements e = doc.select("pub-date");
          Element pubDate1 = null;
          Element pubDate2 = null;
@@ -151,6 +157,9 @@ public class Main {
          Element pubDate = pubDate3 != null ? pubDate3 :
             pubDate2 != null ? pubDate2 :
             pubDate1;
+         if (pubDate == null) {
+            return;
+         }
          Elements children = pubDate.children();
          int year = 0, month = 0, day = 0;
          for (int i = 0; i < children.size(); i++) {
@@ -181,8 +190,6 @@ public class Main {
             Date dt = new Date(year - 1900, month, day);
             article.setDate(dt);
          }
-         String journalName = doc.select("journal-title").first().text();
-         article.setJournalName(journalName);
       }
 
       public static boolean searchInFile(String fileName) throws IOException {

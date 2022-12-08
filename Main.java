@@ -99,17 +99,19 @@ public class Main {
 
       private static void textScanFiles(Article art) {
          String name = art.getName();
-         String jName = art.getJournalName();
+         String jName = art.getJournalName().replaceAll("\\|", "/").replaceAll("\\n", " ");
+         String title = art.getTitle().replaceAll("\\|", "/").replaceAll("\\n", " ");
          String date = art.dateToString();
-         String s;
+         String pValStr;
          try {
             boolean b = searchInFile((art.getName() + ".txt"));
             art.setpVal(b);
             boolean pVal = art.getpVal();
-            s = name + "|" + date + "|" + jName + "|" + pVal;
+            pValStr = Boolean.toString(pVal);
          } catch (IOException e) {
-            s = name + "|" + date + "|" + jName + "|" + "NULL";
+            pValStr = "NULL";
          }
+         String s = name + "|" + date + "|" + jName + "|" + title + "|" + pValStr;
          System.out.println(s);
          try {
             tableWriter.write(s + "\n");
@@ -136,6 +138,11 @@ public class Main {
          processArticleDate(article, doc);
          String journalName = doc.select("journal-title").first().text();
          article.setJournalName(journalName);
+         Elements titleEl = doc.select("article-title");
+         if (titleEl != null && titleEl.size() > 0) {
+            String title = titleEl.first().text();
+            article.setTitle(title);
+         }
       }
 
       private static void processArticleDate(Article article, Document doc) throws IOException{

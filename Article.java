@@ -3,6 +3,7 @@ import java.util.Date;
 public class Article {
    String name;
    String journalName;
+   String title;
    Date date;
    boolean pVal;
    public Article(String name) {
@@ -29,7 +30,14 @@ public class Article {
    public void setJournalName(String jName) {
       journalName = jName;
    }
-   
+
+   public String getTitle() {
+      return title;
+   }
+   public void setTitle(String title) {
+      this.title = title;
+   }
+
    public String getName() {
       return name;
    }
